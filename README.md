@@ -108,7 +108,7 @@ coreutils, sed, grep, find
 Please file an issue for a question, a bug or a feature request.
 Or even better, send a pull request!
 
-[tldr-bash-client github page](http://github.com/pepa65/tldr-bash-client "github.com/pepa65/tldr-bash-client")
+[tldr-bash-client gitlab page](http://gitlab.com/pepa65/tldr-bash-client "gitlab.com/pepa65/tldr-bash-client")
 
 ### License
 

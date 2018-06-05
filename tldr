@@ -5,7 +5,7 @@ version='0.39'
 # tldr-bash-client version 0.39
 # Bash client for tldr: community driven man-by-example
 # - forked from Ray Lee, https://github.com/raylee/tldr
-# - modified and expanded by pepa65: https://github.com/pepa65/tldr-bash-client
+# - modified and expanded by pepa65: https://gitlab.com/pepa65/tldr-bash-client
 # - binary download: http://4e4.win/tldr
 # Requiring: coreutils, grep, unzip, curl/wget, less (optional)
 
@@ -65,7 +65,7 @@ Usage(){
 		  $HOP-r$XHOP, $HOP--render$XHOP ${HFI}file$XHFI:          Render ${HFI}file$XHFI as tldr markdown
 		  $HOP-m$XHOP, $HOP--markdown$XHOP ${HCO}command$XHCO:     Show the markdown source for ${HCO}command$XHCO
 		  $HOP-u$XHOP, $HOP--update$XHOP:               Update the pages cache by downloading repo archive
-		  $HOP-v$XHOP, $HOP--version$XHOP:              Version number and github repo location
+		  $HOP-v$XHOP, $HOP--version$XHOP:              Version number and gitlab repo location
 		  $HDE[$HOP-h$XHOP, $HOP-?$XHOP, $HOP--help$XHOP]:           This help overview
 
 		 ${HDE}Element styling:$XHDE ${T}Title$XT ${D}Description$XD ${E}Example$XE ${C}Code$XC ${V}Value$XV
@@ -199,7 +199,7 @@ Config(){
 		trap 'cat <<<"$stdout"' EXIT ||
 		trap 'less -~RXQFP"Browse up/down, press Q to exit " <<<"$stdout"' EXIT
 
-	version="tldr-bash-client version $version$XB ${URL}http://github.com/pepa65/tldr-bash-client$XURL"
+	version="tldr-bash-client version $version$XB ${URL}http://gitlab.com/pepa65/tldr-bash-client$XURL"
 
 	# Select download method
 	dl="$(type -p curl) -sLfo" || {
