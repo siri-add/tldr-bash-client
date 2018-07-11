@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set +vx -o pipefail
 [[ $- = *i* ]] && echo "Don't source this script!" && return 1
-version='0.39'
-# tldr-bash-client version 0.39
+version='0.40'
+# tldr-bash-client version 0.40
 # Bash client for tldr: community driven man-by-example
 # - forked from Ray Lee, https://github.com/raylee/tldr
 # - modified and expanded by pepa65: https://gitlab.com/pepa65/tldr-bash-client
@@ -98,7 +98,7 @@ Style(){
 		STYLES+=${color[$style]:-}${bg[$style]:-}${mode[$style]:-}
 		XSTYLES=${xmode[$style]:-}${xbg[$style]:-}${xcolor[$style]:-}$XSTYLES
 	done
-}	
+}
 
 # Sets: color xcolor bg xbg mode xmode
 Init_term(){
@@ -369,6 +369,7 @@ Find_regex(){
 
 # $1: exit code; Uses: dl cachedir zip_url
 Cache_fill(){
+	updated=0
 	local tmp unzip
 	unzip="$(type -p unzip) -q" || {
 		Err "tldr requires ${I}unzip$XI to fill the cache"
@@ -380,7 +381,7 @@ Cache_fill(){
 		Err "Could not download pages archive from $U$zip_url$XU with $dl"
 		exit 8
 	}
-	$unzip "$tmp/pages.zip" -d "$tmp" 'pages/*' || {
+	$unzip "$tmp/pages.zip" -d "$tmp" 'pages/**' || {
 		rm -- "$tmp"
 		Err "Couldn't unzip the cache archive on $tmp/pages.zip"
 		exit 9
@@ -389,6 +390,7 @@ Cache_fill(){
 	mv -- "$tmp/pages/"* "${cachedir:?}/"
 	rm -rf -- "$tmp"
 	Inf "Pages cached in $U$cachedir$XU"
+	updated=1
 }
 
 # $@: commandline parameters; Uses: version cached; Sets: platform page
@@ -410,7 +412,7 @@ Main(){
 		platform=current
 		List_pages $err ;;
 	-u|--update) [[ $2 ]] && Err "$nomore" && err=15
-		Cache_fill
+		((updated)) || Cache_fill
 		exit "$err" ;;
 	-v|--version) [[ $2 ]] && Err "$nomore" && err=16
 		Inf "$version"
@@ -448,5 +450,5 @@ Main(){
 }
 
 Main "$@"
-# The error trap will output the accumulated stdout
+# The exit trap will output the accumulated stdout
 exit 0
