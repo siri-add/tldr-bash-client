@@ -184,7 +184,7 @@ Recent(){ find "$1" -mtime -"${TLDR_EXPIRY// /}" >/dev/null 2>&1;}
 # Initialize globals, check the environment; Uses: config cachedir version
 # Sets: stdout os version dl
 Config(){
-	type -p less >/dev/null || TLDR_LESS=0
+	type -P less >/dev/null || TLDR_LESS=0
 
 	os=common stdout='' Q='"' N=$'\n'
 	case "$(uname -s)" in
@@ -202,8 +202,8 @@ Config(){
 	version="tldr-bash-client version $version$XB ${URL}http://gitlab.com/pepa65/tldr-bash-client$XURL"
 
 	# Select download method
-	dl="$(type -p curl) -sLfo" || {
-		dl="$(type -p wget) --max-redirect=20 -qNO" || {
+	dl="$(type -P curl) -sLfo" || {
+		dl="$(type -P wget) --max-redirect=20 -qNO" || {
 			Err "tldr requires ${I}curl$XI or ${I}wget$XI installed in your path"
 			exit 3
 		}
@@ -371,7 +371,7 @@ Find_regex(){
 Cache_fill(){
 	updated=0
 	local tmp unzip
-	unzip="$(type -p unzip) -q" || {
+	unzip="$(type -P unzip) -q" || {
 		Err "tldr requires ${I}unzip$XI to fill the cache"
 		exit 7
 	}
