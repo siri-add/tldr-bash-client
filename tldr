@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set +vx -o pipefail
 [[ $- = *i* ]] && echo "Don't source this script!" && return 1
-version='0.40'
-# tldr-bash-client version 0.40
+version='0.41'
+# tldr-bash-client version 0.41
 # Bash client for tldr: community driven man-by-example
 # - forked from Ray Lee, https://github.com/raylee/tldr
 # - modified and expanded by pepa65: https://gitlab.com/pepa65/tldr-bash-client
@@ -102,38 +102,40 @@ Style(){
 
 # Sets: color xcolor bg xbg mode xmode
 Init_term(){
-	[[ -t 2 ]] && {  # only if interactive session (stderr open)
-			B=$'\e[1m' # $(tput bold || tput md)  # Start bold
-			XB=$'\e[0m'  # End bold (no tput code...)
-			U=$'\e[4m' # $(tput smul || tput us)  # Start underline
-			XU=$'\e[24m' # $(tput rmul || tput ue)  # End underline
-			I=$'\e[3m' # $(tput sitm || tput ZH)  # Start italic
-			XI=$'\e[23m' # $(tput ritm || tput ZR)  # End italic
-			R=$'\e[7m' # $(tput smso || tput so)  # Start reverse
-			XR=$'\e[27m' # $(tput rmso || tput se)  # End reverse
-			#X=$'\e[0m' # $(tput sgr0 || tput me)  # End all
+	if [[ -t 2 ]]
+	then # only if interactive session (stderr open)
+		B=$'\e[1m' # $(tput bold || tput md)  # Start bold
+		XB=$'\e[0m'  # End bold (no tput code...)
+		U=$'\e[4m' # $(tput smul || tput us)  # Start underline
+		XU=$'\e[24m' # $(tput rmul || tput ue)  # End underline
+		I=$'\e[3m' # $(tput sitm || tput ZH)  # Start italic
+		XI=$'\e[23m' # $(tput ritm || tput ZR)  # End italic
+		R=$'\e[7m' # $(tput smso || tput so)  # Start reverse
+		XR=$'\e[27m' # $(tput rmso || tput se)  # End reverse
+		#X=$'\e[0m' # $(tput sgr0 || tput me)  # End all
 
-		[[ $TERM != *-m ]] && {
-				BLA=$'\e[30m' # $(tput setaf 0 || tput AF 0)
-				RED=$'\e[31m' # $(tput setaf 1 || tput AF 1)
-				GRE=$'\e[32m' # $(tput setaf 2 || tput AF 2)
-				YEL=$'\e[33m' # $(tput setaf 3 || tput AF 3)
-				BLU=$'\e[34m' # $(tput setaf 4 || tput AF 4)
-				MAG=$'\e[35m' # $(tput setaf 5 || tput AF 5)
-				CYA=$'\e[36m' # $(tput setaf 6 || tput AF 6)
-				WHI=$'\e[37m' # $(tput setaf 7 || tput AF 7)
-				DEF=$'\e[39m' # $(tput op)
-				BLAB=$'\e[40m' # $(tput setab 0 || tput AB 0)
-				REDB=$'\e[41m' # $(tput setab 1 || tput AB 1)
-				GREB=$'\e[42m' # $(tput setab 2 || tput AB 2)
-				YELB=$'\e[43m' # $(tput setab 3 || tput AB 3)
-				BLUB=$'\e[44m' # $(tput setab 4 || tput AB 4)
-				MAGB=$'\e[45m' # $(tput setab 5 || tput AB 5)
-				CYAB=$'\e[46m' # $(tput setab 6 || tput AB 6)
-				WHIB=$'\e[47m' # $(tput setab 7 || tput AB 7)
-				DEFB=$'\e[49m' # $(tput op)
-		}
-	}
+		if [[ $TERM != *-m ]]
+		then
+			BLA=$'\e[30m' # $(tput setaf 0 || tput AF 0)
+			RED=$'\e[31m' # $(tput setaf 1 || tput AF 1)
+			GRE=$'\e[32m' # $(tput setaf 2 || tput AF 2)
+			YEL=$'\e[33m' # $(tput setaf 3 || tput AF 3)
+			BLU=$'\e[34m' # $(tput setaf 4 || tput AF 4)
+			MAG=$'\e[35m' # $(tput setaf 5 || tput AF 5)
+			CYA=$'\e[36m' # $(tput setaf 6 || tput AF 6)
+			WHI=$'\e[37m' # $(tput setaf 7 || tput AF 7)
+			DEF=$'\e[39m' # $(tput op)
+			BLAB=$'\e[40m' # $(tput setab 0 || tput AB 0)
+			REDB=$'\e[41m' # $(tput setab 1 || tput AB 1)
+			GREB=$'\e[42m' # $(tput setab 2 || tput AB 2)
+			YELB=$'\e[43m' # $(tput setab 3 || tput AB 3)
+			BLUB=$'\e[44m' # $(tput setab 4 || tput AB 4)
+			MAGB=$'\e[45m' # $(tput setab 5 || tput AB 5)
+			CYAB=$'\e[46m' # $(tput setab 6 || tput AB 6)
+			WHIB=$'\e[47m' # $(tput setab 7 || tput AB 7)
+			DEFB=$'\e[49m' # $(tput op)
+		fi
+	fi
 
 	declare -A color=(['black']=$BLA ['red']=$RED ['green']=$GRE ['yellow']=$YEL \
 			['blue']=$BLU ['magenta']=$MAG ['cyan']=$CYA ['white']=$WHI)
@@ -184,7 +186,8 @@ Recent(){ find "$1" -mtime -"${TLDR_EXPIRY// /}" >/dev/null 2>&1;}
 # Initialize globals, check the environment; Uses: config cachedir version
 # Sets: stdout os version dl
 Config(){
-	type -P less >/dev/null || TLDR_LESS=0
+	# Don't use less if no stdout or less not available
+	[[ ! -t 1 ]] && ! type -P less >/dev/null && TLDR_LESS=0
 
 	os=common stdout='' Q='"' N=$'\n'
 	case "$(uname -s)" in
@@ -202,12 +205,10 @@ Config(){
 	version="tldr-bash-client version $version$XB ${URL}http://gitlab.com/pepa65/tldr-bash-client$XURL"
 
 	# Select download method
-	dl="$(type -P curl) -sLfo" || {
-		dl="$(type -P wget) --max-redirect=20 -qNO" || {
-			Err "tldr requires ${I}curl$XI or ${I}wget$XI installed in your path"
-			exit 3
-		}
-	}
+	! dl="$(type -P curl) -sLfo" &&
+		! dl="$(type -P wget) --max-redirect=20 -qNO" &&
+		Err "tldr requires ${I}curl$XI or ${I}wget$XI installed in your path" &&
+		exit 3
 
 	pages_url='https://raw.githubusercontent.com/tldr-pages/tldr/master/pages'
 	zip_url='http://tldr.sh/assets/tldr.zip'
@@ -218,10 +219,10 @@ Config(){
 		[[ $XDG_DATA_HOME ]] && cachedir=$XDG_DATA_HOME/tldr ||
 			cachedir=$HOME/.local/share/tldr
 	fi
-	[[ -d "$cachedir" ]] || mkdir -p "$cachedir" || {
-		Err "Can't create the pages cache location $cachedir"
+	! [[ -d "$cachedir" ]] &&
+		! mkdir -p "$cachedir" &&
+		Err "Can't create the pages cache location $cachedir" &&
 		exit 4
-	}
 	index=$cachedir/index.json
 	# update if the file doesn't exists, or if it's older than $TLDR_EXPIRY
 	[[ -f $index ]] && Recent "$index" || Cache_fill
@@ -248,28 +249,36 @@ Get_tldr(){
 	then  # platform given on commandline
 		[[ ! $desc =~ \"$platform\" ]] && notfound=$I$platform$XI && err=1 || md=$platform/$1.md
 	else  # check common
-		[[ $desc =~ \"common\" ]] && md=common/$1.md || {  # not in common either
+		if [[ $desc =~ \"common\" ]]
+		then
+			md=common/$1.md
+		else  # not in common either
 			[[ $notfound ]] && notfound+=" or "
 			notfound+=${I}common$XI
-		}
+		fi
 	fi
 	# if no page found yet, try the system platform
-	[[ $md ]] || [[ $platform = $os ]] || {
+	[[ $md ]] ||
+		if [[ $platform = $os ]]
+		then
 			[[ $desc =~ \"$os\" ]] && md=$os/$1.md
-	} || {
-		notfound+=" or $I$os$XI"
-		err=1
-	}
+		else
+			notfound+=" or $I$os$XI"
+			err=1
+		fi
+
 	# if still no page found, get the first entry in index
 	[[ $md ]] || md=$(cut -d "$Q" -f 8 <<<"$desc")/"$1.md"
 	((err)) && Err "tldr page $I$1$XI not found in $notfound, from platform $U${md%/*}$XU instead"
 
 	# return the local cached copy of the tldrpage, or retrieve and cache from github
 	cached=$cachedir/$md
-	Recent "$cached" || {
+	if ! Recent "$cached"
+	then
 		mkdir -p "${cached%/*}"
-		$dl "$cached" "$pages_url/$md" || Err "Could not download page $I$cached$XI with $dl"
-	}
+		$dl "$cached" "$pages_url/$md" ||
+			Err "Could not download page $I$cached$XI with $dl"
+	fi
 }
 
 # $1: file (optional); Uses: page stdout; Sets: ln REPLY
@@ -281,9 +290,11 @@ Display_tldr(){
 	while read -r || [[ $REPLY ]]
 	do
 		((++ln))
-		((ln==1)) && {
+		if ((ln==1))
+		then
 			[[ ${REPLY:0:1} = '#' ]] && newfmt=0 || newfmt=1
-			((newfmt)) && {
+			if ((newfmt))
+			then
 				[[ $REPLY ]] || Unlinted "Empty title"
 				Out "$TNL$TSP$T$REPLY$XT"
 				len=${#REPLY}  # title length
@@ -293,8 +304,8 @@ Display_tldr(){
 				((len!=${#REPLY})) && Unlinted "Underline length not equal to title's"
 				read -r
 				((++ln))
-			}
-		}
+			fi
+		fi
 		case "${REPLY:0:1}" in  # first character
 			'#') ((newfmt)) && Unlinted "Bad first character"
 				((${#REPLY} <= 2)) && Unlinted "No title"
@@ -371,21 +382,18 @@ Find_regex(){
 Cache_fill(){
 	updated=0
 	local tmp unzip
-	unzip="$(type -P unzip) -q" || {
-		Err "tldr requires ${I}unzip$XI to fill the cache"
+	! unzip="$(type -P unzip) -q" &&
+		Err "tldr requires ${I}unzip$XI to fill the cache" &&
 		exit 7
-	}
 	tmp=$(mktemp -d)
-	$dl "$tmp/pages.zip" "$zip_url" || {
-		rm -- "$tmp"
-		Err "Could not download pages archive from $U$zip_url$XU with $dl"
+	! $dl "$tmp/pages.zip" "$zip_url" &&
+		rm -- "$tmp" &&
+		Err "Could not download pages archive from $U$zip_url$XU with $dl" &&
 		exit 8
-	}
-	$unzip "$tmp/pages.zip" -d "$tmp" 'pages/**' || {
-		rm -- "$tmp"
-		Err "Couldn't unzip the cache archive on $tmp/pages.zip"
+	! $unzip "$tmp/pages.zip" -d "$tmp" 'pages/**' &&
+		rm -- "$tmp" &&
+		Err "Couldn't unzip the cache archive on $tmp/pages.zip" &&
 		exit 9
-	}
 	rm -rf -- "${cachedir:?}/"*
 	mv -- "$tmp/pages/"* "${cachedir:?}/"
 	rm -rf -- "$tmp"
@@ -395,18 +403,20 @@ Cache_fill(){
 
 # $@: commandline parameters; Uses: version cached; Sets: platform page
 Main(){
-	local markdown=0 err=0 nomore='No more command line arguments allowed'
+	local markdown=0 err=0 nomore='Extraneous commandline arguments ignored'
 	Config
 	case "$1" in
 	-s|--search) [[ -z $2 ]] && Err "Search term (regex) needed" && Usage 10
 		[[ $3 ]] && Err "$nomore" && err=11
 		Find_regex "$2" "$err" ;;
-	-l|--list) [[ $2 ]] && {
+	-l|--list)
+		if [[ $2 ]]
+		then
 			platform=$2
 			[[ ,common,linux,osx,sunos,windows,current, != *,$platform,* ]] &&
 				Err "Unknown platform $I$platform$XI" && Usage 12
 			[[ $3 ]] && Err "$nomore" && err=13
-		}
+		fi
 		List_pages "$err" ;;
 	-a|--list-all) [[ $2 ]] && Err "$nomore" && err=14
 		platform=current
@@ -419,11 +429,15 @@ Main(){
 		exit "$err" ;;
 	-r|--render) [[ -z $2 ]] && Err "Specify a file to render" && Usage 17
 		[[ $3 ]] && Err "$nomore" && err=18
-		[[ -f "$2" ]] && {
+		if [[ -f "$2" ]]
+		then
 			Display_tldr "$2" && exit "$err"
 			Err "A file error occured"
 			exit 19
-		} || Err "No file: ${I}$2$XI" && exit 20 ;;
+		else
+			Err "No file: ${I}$2$XI"
+			exit 20
+		fi ;;
 	-m|--markdown) shift
 		page=$*
 		[[ -z $page ]] && Err "Specify a page to display" && Usage 21
@@ -438,10 +452,9 @@ Main(){
 	[[ -z $page ]] && Err "No command specified" && Usage 24
 	[[ ${page:0:1} = '-' || $page = *' '-* ]] && Err "Only one option allowed" && Usage 25
 	[[ $page = */* ]] && platform=${page%/*} && page=${page##*/}
-	[[ $platform && ,common,linux,osx,sunos,windows, != *,$platform,* ]] && {
-		Err "Unknown platform $I$platform$XI"
+	[[ $platform && ,common,linux,osx,sunos,windows, != *,$platform,* ]] &&
+		Err "Unknown platform $I$platform$XI" &&
 		Usage 26
-	}
 
 	Get_tldr "${page// /-}"
 	[[ ! -s $cached ]] && Err "tldr page for command $I$page$XI not found" \
