@@ -58,7 +58,7 @@ Usage(){
 		                              ${HPL}current$XHPL (includes ${HPL}common$XHPL), ${HPL}all$XHPL (default)
 
 		 ${HOP}option$XHOP (optional) one of:
-		  $HOP-s$XHOP, $HOP--search$XHOP ${HFI}regex$XHFI:         Search for ${HFI}regex$XHFI in all tldr pages
+		  $HOP-s$XHOP, $HOP--search$XHOP ${HFI}regex$XHFI [$HFI..$XHFI]:    Search for (combined) ${HFI}regex(es)$XHFI in all tldr pages
 		  $HOP-l$XHOP, $HOP--list$XHOP [${HPL}platform$XHPL]:      List all pages (from ${HPL}platform$XHPL)
 		  $HOP-a$XHOP, $HOP--list-all$XHOP:             List all pages from ${HPL}current$XHPL platform
 		  $HOP-r$XHOP, $HOP--render$XHOP ${HFI}file$XHFI:          Render ${HFI}file$XHFI as tldr markdown
