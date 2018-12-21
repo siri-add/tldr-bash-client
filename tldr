@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set +vx -o pipefail
 [[ $- = *i* ]] && echo "Don't source this script!" && return 1
-version='0.42'
-# tldr-bash-client version 0.42
+version='0.43'
+# tldr-bash-client version 0.43
 # Bash client for tldr: community driven man-by-example
 # - forked from Ray Lee, https://github.com/raylee/tldr
 # - modified and expanded by pepa65: https://gitlab.com/pepa65/tldr-bash-client
@@ -17,32 +17,35 @@ version='0.42'
 # 'Newline' can be added to the style list to add a newline before the element
 # and 'Space' to add a space at the start of the line
 # (style items are separated by space, lower/uppercase mixed allowed)
-: "${TLDR_TITLE_STYLE:= Newline Space Bold Yellow }"
-: "${TLDR_DESCRIPTION_STYLE:= Space Yellow }"
-: "${TLDR_EXAMPLE_STYLE:= Newline Space Bold Green }"
-: "${TLDR_CODE_STYLE:= Space Bold Blue }"
-: "${TLDR_VALUE_ISTYLE:= Space Bold Cyan }"
+: ${TLDR_TITLE_STYLE:="Newline Space Bold Yellow"}
+: ${TLDR_DESCRIPTION_STYLE:="Space Yellow"}
+: ${TLDR_EXAMPLE_STYLE:="Newline Space Bold Green"}
+: ${TLDR_CODE_STYLE:="Space Bold Blue"}
+: ${TLDR_VALUE_ISTYLE:="Space Bold Cyan"}
 # The Value style (above) is an Inline style: doesn't take Newline or Space
 # Inline styles for help text: default, URL, option, platform, command, header
-: "${TLDR_DEFAULT_ISTYLE:= White }"
-: "${TLDR_URL_ISTYLE:= Yellow }"
-: "${TLDR_HEADER_ISTYLE:= Bold }"
-: "${TLDR_OPTION_ISTYLE:= Bold Yellow }"
-: "${TLDR_PLATFORM_ISTYLE:= Bold Blue }"
-: "${TLDR_COMMAND_ISTYLE:= Bold Cyan }"
-: "${TLDR_FILE_ISTYLE:= Bold Magenta }"
+: ${TLDR_DEFAULT_ISTYLE:="White"}
+: ${TLDR_URL_ISTYLE:="Yellow"}
+: ${TLDR_HEADER_ISTYLE:="Bold"}
+: ${TLDR_OPTION_ISTYLE:="Bold Yellow"}
+: ${TLDR_PLATFORM_ISTYLE:="Bold Blue"}
+: ${TLDR_COMMAND_ISTYLE:="Bold Cyan"}
+: ${TLDR_FILE_ISTYLE:="Bold Magenta"}
 # Color/BG (Newline and Space also allowed) for error and info messages
-: "${TLDR_ERROR_COLOR:= Newline Space Red }"
-: "${TLDR_INFO_COLOR:= Newline Space Green }"
+: ${TLDR_ERROR_COLOR:="Newline Space Red"}
+: ${TLDR_INFO_COLOR:="Newline Space Green"}
 
 # How many days before freshly downloading a potentially stale page
-: "${TLDR_EXPIRY:= 60 }"
+: ${TLDR_EXPIRY:=60}
 
 # Alternative location of pages cache
-: "${TLDR_CACHE:= }"
+: ${TLDR_CACHE_LOCATION:=""}
 
 # Usage of 'less' or 'cat' for output (set to '0' for cat)
-: "${TLDR_LESS:= }"
+: ${TLDR_LESS:=1}
+
+# Force current OS
+: ${TLDR_OS:=""}
 
 ## Function definitions
 
@@ -69,7 +72,7 @@ Usage(){
 
 		 ${HDE}Element styling:$XHDE ${T}Title$XT ${D}Description$XD ${E}Example$XE ${C}Code$XC ${V}Value$XV
 		 ${HDE}All pages and the index are cached locally under $HUR$cachedir$XHUR.
-		 ${HDE}By default, the cached copies will be freshly downloaded after $HUR${TLDR_EXPIRY// /}$XHUR days.
+		 ${HDE}By default, the cached copies will be freshly downloaded after $HUR$TLDR_EXPIRY$XHUR days.
 		EOF
 	)"
 	exit "${1:-0}"
@@ -87,7 +90,7 @@ Inf(){ Out "$INFNL$INFSP$INF$B$1$XB$XINF";}
 # $1: Style specification; Uses: color xcolor bg xbg mode xmode
 Style(){
 	local -l style
-	STYLES='' XSTYLES='' COLOR='' XCOLOR='' NL='' SP=''
+	STYLES= XSTYLES= COLOR= XCOLOR= NL= SP=
 	for style in $1
 	do
 		[[ $style = newline ]] && NL=$N
@@ -180,7 +183,7 @@ Init_term(){
 }
 
 # $1: page
-Recent(){ find "$1" -mtime -"${TLDR_EXPIRY// /}" >/dev/null 2>&1;}
+Recent(){ find "$1" -mtime -"$TLDR_EXPIRY" >/dev/null 2>&1;}
 
 # Initialize globals, check the environment; Uses: config cachedir version
 # Sets: stdout os version dl
@@ -188,14 +191,16 @@ Config(){
 	# Don't use less if no stdout or less not available
 	[[ ! -t 1 ]] && ! type -P less >/dev/null && TLDR_LESS=0
 
-	os=common stdout='' Q='"' N=$'\n'
-	case "$(uname -s)" in
-		Darwin) os='osx' ;;
-		Linux) os='linux' ;;
-		SunOS) os='sunos' ;;
-		CYGWIN*) os='windows' ;;
-		MINGW*) os='windows' ;;
-	esac
+	stdout= Q='"' N=$'\n'
+	TLDR_OS=${TLDR_OS// } TLDR_LESS=${TLDR_LESS// } TLDR_EXPIRY=${TLDR_EXPIRY// }
+	[[ $TLDR_OS ]] && os=$TLDR_OS ||
+		case "$(uname -s)" in
+			Darwin) os='osx' ;;
+			Linux) os='linux' ;;
+			SunOS) os='sunos' ;;
+			CYGWIN*|MINGW*) os='windows' ;;
+			*) os=
+		esac
 	Init_term
 	[[ $TLDR_LESS = 0 ]] && 
 		trap 'cat <<<"$stdout"' EXIT ||
@@ -212,7 +217,7 @@ Config(){
 	pages_url='https://raw.githubusercontent.com/tldr-pages/tldr/master/pages'
 	zip_url='http://tldr.sh/assets/tldr.zip'
 
-	cachedir=$(echo $TLDR_CACHE)
+	cachedir=$TLDR_CACHE_LOCATION
 	if [[ -z $cachedir ]]
 	then
 		[[ $XDG_DATA_HOME ]] && cachedir=$XDG_DATA_HOME/tldr ||
@@ -269,7 +274,7 @@ Get_tldr(){
 	[[ $md ]] ||
 		if [[ $desc =~ \"$os\" ]]
 		then md=$os/$1.md
-		else [[ $platform = $os ]] || notfound+=" or $I$os$XI" err=1
+		else [[ -z $os || $platform = $os ]] || notfound+=" or $I$os$XI" err=1
 		fi
 
 	# if still no page found, get the first entry in index
@@ -289,7 +294,7 @@ Get_tldr(){
 # $1: file (optional); Uses: page stdout; Sets: ln REPLY
 Display_tldr(){
 	local newfmt len val
-	ln=0 REPLY=''
+	ln=0 REPLY=
 	[[ $md ]] || md=$1
 	# Read full lines, and process even when no newline at the end
 	while read -r || [[ $REPLY ]]
@@ -320,7 +325,7 @@ Display_tldr(){
 				[[ ! ${REPLY:1:1} = ' ' ]] && Unlinted "2nd character no space"
 				[[ ! ${REPLY: -1} = '.' ]] && Unlinted "Description doesn't end in full stop"
 				Out "$DNL$DSP$D${REPLY:2}$XD"
-				DNL='' ;;
+				DNL= ;;
 			'-') ((newfmt)) && Unlinted "Bad first character"
 				((${#REPLY} <= 2)) && Unlinted "No example content"
 				[[ ! ${REPLY:1:1} = ' ' ]] && Unlinted "2nd character no space"
@@ -357,9 +362,12 @@ List_pages(){
 	local ptext pregex=$platform
 	[[ $platform ]] && ptext="platform $I$platform$XI" ||
 		pregex=^ ptext="${I}all$XI platforms"
-	[[ $platform = current ]] &&
-		pregex="-e $os -e common" ptext="$I$os$XI platform and ${I}common$XI"
+	if [[ $platform = current ]]
+	then [[ $os ]] &&
+		pregex="-e $os -e common" ptext="$I$os$XI platform and ${I}common$XI" ||
+		pregex=common ptext="platform not detected, ${I}common$XI"
 	Inf "Known tldr pages from $ptext:"
+	fi
 	Out "$(tr '{' '\n' <"$index" |grep $pregex |cut -d "$Q" -f4 |column)"
 	exit "$1"
 }
