@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set +vx -o pipefail
 [[ $- = *i* ]] && echo "Don't source this script!" && return 1
-version='0.43'
-# tldr-bash-client version 0.43
+version='0.44'
+# tldr-bash-client version 0.44
 # Bash client for tldr: community driven man-by-example
 # - forked from Ray Lee, https://github.com/raylee/tldr
 # - modified and expanded by pepa65: https://gitlab.com/pepa65/tldr-bash-client
@@ -36,16 +36,15 @@ version='0.43'
 : ${TLDR_INFO_COLOR:="Newline Space Green"}
 
 # How many days before freshly downloading a potentially stale page
-: ${TLDR_EXPIRY:=60}
-
+: ${TLDR_EXPIRY:=7}
 # Alternative location of pages cache
 : ${TLDR_CACHE_LOCATION:=""}
-
 # Usage of 'less' or 'cat' for output (set to '0' for cat)
 : ${TLDR_LESS:=1}
-
 # Force current OS
 : ${TLDR_OS:=""}
+# Force preferred language: ISO639 format (2 lowercase letters)
+: ${TLDR_LANG:=""}
 
 ## Function definitions
 
@@ -72,7 +71,7 @@ Usage(){
 
 		 ${HDE}Element styling:$XHDE ${T}Title$XT ${D}Description$XD ${E}Example$XE ${C}Code$XC ${V}Value$XV
 		 ${HDE}All pages and the index are cached locally under $HUR$cachedir$XHUR.
-		 ${HDE}By default, the cached copies will be freshly downloaded after $HUR$TLDR_EXPIRY$XHUR days.
+		 ${HDE}Cached pages will be freshly downloaded after $HUR$TLDR_EXPIRY$XHUR days. Preferred language: $lang.
 		EOF
 	)"
 	exit "${1:-0}"
@@ -183,10 +182,10 @@ Init_term(){
 }
 
 # $1: page
-Recent(){ find "$1" -mtime -"$TLDR_EXPIRY" >/dev/null 2>&1;}
+Recent(){ [[ $(find "$1" -mtime -"$TLDR_EXPIRY") ]];}
 
 # Initialize globals, check the environment; Uses: config cachedir version
-# Sets: stdout os version dl
+# Sets: stdout os version dl pages
 Config(){
 	# Don't use less if no stdout or less not available
 	[[ ! -t 1 ]] && ! type -P less >/dev/null && TLDR_LESS=0
@@ -201,8 +200,10 @@ Config(){
 			CYGWIN*|MINGW*) os='windows' ;;
 			*) os=
 		esac
+	lang=${TLDR_LANG:-$LANG} lang=${lang:0:2} lang=${lang,,}
+	[[ $lang = en ]] && pages=pages || pages=pages.$lang
 	Init_term
-	[[ $TLDR_LESS = 0 ]] && 
+	[[ $TLDR_LESS = 0 ]] &&
 		trap 'cat <<<"$stdout"' EXIT ||
 		trap 'less -~RXQFP"Browse up/down, press Q to exit " <<<"$stdout"' EXIT
 
@@ -214,7 +215,7 @@ Config(){
 		Err "tldr requires ${I}curl$XI or ${I}wget$XI installed in your path" &&
 		exit 3
 
-	pages_url='https://raw.githubusercontent.com/tldr-pages/tldr/master/pages'
+	repo_url='https://raw.githubusercontent.com/tldr-pages/tldr/master'
 	zip_url='http://tldr.sh/assets/tldr.zip'
 
 	cachedir=$TLDR_CACHE_LOCATION
@@ -227,10 +228,11 @@ Config(){
 		! mkdir -p "$cachedir" &&
 		Err "Can't create the pages cache location $cachedir" &&
 		exit 4
-	index=$cachedir/index.json
+	# Indexes for every language should be available, $pages instead of pages
+	index=$cachedir/pages/index.json
 	# update if the file doesn't exists, or if it's older than $TLDR_EXPIRY
 	[[ -f $index ]] && Recent "$index" || Cache_fill
-	platforms=$(cd "$cachedir"; ls -d -- */ |tr -d /)
+	platforms=$(cd "$cachedir/pages"; ls -d -- */ |tr -d /)
 	platforms=${platforms//$'\n'/,}
 }
 
@@ -240,7 +242,7 @@ Unlinted(){
 	exit 5
 }
 
-# $1: page; Uses: index cachedir pages_url platform os dl cached md
+# $1: page; Uses: index cachedir repo_url platform os dl cached md
 # Sets: cached md
 Get_tldr(){
 	local desc err=0 notfound
@@ -263,8 +265,7 @@ Get_tldr(){
 		fi
 	else  # no platform specified: check common
 		if [[ $desc =~ \"common\" ]]
-		then
-			md=common/$1.md
+		then md=common/$1.md
 		else  # not in common either
 			[[ $notfound ]] && notfound+=" or "
 			notfound+=${I}common$XI
@@ -282,12 +283,14 @@ Get_tldr(){
 	((err)) && Err "tldr page $I$1$XI not found in $notfound, from platform $U${md%/*}$XU instead"
 
 	# return local cached copy of tldr-page, or retrieve and cache from github
-	cached=$cachedir/$md
+	cached=$cachedir/$pages/$md
+	[[ $cached ]] || cached=$cachedir/pages/$md
 	if ! Recent "$cached"
 	then
 		mkdir -p "${cached%/*}"
-		$dl "$cached" "$pages_url/$md" ||
-			Err "Could not download page $I$cached$XI with $dl"
+		$dl "$cached" "$repo_url/$pages/$md" &&
+			Inf "Downloaded page '$pages/$md'" ||
+			Err "Could not download $repo_url/$pages/$md"
 	fi
 }
 
@@ -364,20 +367,20 @@ List_pages(){
 		pregex=^ ptext="${I}all$XI platforms"
 	if [[ $platform = current ]]
 	then [[ $os ]] &&
-		pregex="-e $os -e common" ptext="$I$os$XI platform and ${I}common$XI" ||
-		pregex=common ptext="platform not detected, ${I}common$XI"
-	Inf "Known tldr pages from $ptext:"
+			pregex="-e $os -e common" ptext="$I$os$XI platform and ${I}common$XI" ||
+			pregex=common ptext="platform not detected, ${I}common$XI"
 	fi
+	Inf "Known tldr pages from $ptext:"
 	Out "$(tr '{' '\n' <"$index" |grep $pregex |cut -d "$Q" -f4 |column)"
 	exit "$1"
 }
 
 # $1: regex(es); Uses: cachedir
 Find_regex(){
-	local regex=$* list=$cachedir/*/*.md
+	local regex=$* list=$cachedir/*/*/*.md
 	while (($#))
 	do
-		list=$(grep $1 $list |cut -d: -f1)
+		list=$(grep "$1" $list |cut -d: -f1)
 		shift
 	done
 	n=$(wc -l <<<"$list")
@@ -402,16 +405,20 @@ Cache_fill(){
 		Err "tldr requires ${I}unzip$XI to fill the cache" &&
 		exit 7
 	tmp=$(mktemp -d)
-	! $dl "$tmp/pages.zip" "$zip_url" &&
-		rm -- "$tmp" &&
-		Err "Could not download pages archive from $U$zip_url$XU with $dl" &&
+	if ! $dl "$tmp/pages.zip" "$zip_url"
+	then
+		rm -- "$tmp" || Err "Error deleting temporary directory $tmp"
+		Err "Could not download pages archive from $U$zip_url$XU with $dl"
 		exit 8
-	! $unzip "$tmp/pages.zip" -d "$tmp" 'pages/**' &&
-		rm -- "$tmp" &&
-		Err "Couldn't unzip the cache archive on $tmp/pages.zip" &&
+	fi
+	if ! $unzip "$tmp/pages.zip" -d "$tmp"
+	then
+		rm -- "$tmp" || Err "Error deleting temporary directory $tmp"
+		Err "Couldn't unzip the cache archive on $tmp/pages.zip"
 		exit 9
+	fi
 	rm -rf -- "${cachedir:?}/"*
-	mv -- "$tmp/pages/"* "${cachedir:?}/"
+	mv -- "$tmp"/pages* "${cachedir:?}/"
 	rm -rf -- "$tmp"
 	Inf "Pages cached in $U$cachedir$XU"
 	updated=1
@@ -424,7 +431,7 @@ Main(){
 	case "$1" in
 	-s|--search) [[ -z $2 ]] && Err "Search term(s) [regex] needed" && Usage 10
 		shift
-		Find_regex $* ;;
+		Find_regex "$@" ;;
 	-l|--list)
 		if [[ $2 ]]
 		then
