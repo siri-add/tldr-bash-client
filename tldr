@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set +vx -o pipefail
 [[ $- = *i* ]] && echo "Don't source this script!" && return 1
-version='0.44'
+version='0.45'
 # tldr-bash-client version 0.44
 # Bash client for tldr: community driven man-by-example
 # - forked from Ray Lee, https://github.com/raylee/tldr
@@ -17,34 +17,34 @@ version='0.44'
 # 'Newline' can be added to the style list to add a newline before the element
 # and 'Space' to add a space at the start of the line
 # (style items are separated by space, lower/uppercase mixed allowed)
-: ${TLDR_TITLE_STYLE:="Newline Space Bold Yellow"}
-: ${TLDR_DESCRIPTION_STYLE:="Space Yellow"}
-: ${TLDR_EXAMPLE_STYLE:="Newline Space Bold Green"}
-: ${TLDR_CODE_STYLE:="Space Bold Blue"}
-: ${TLDR_VALUE_ISTYLE:="Space Bold Cyan"}
+: ${TLDR_TITLE_STYLE="Newline Space Bold Yellow"}
+: ${TLDR_DESCRIPTION_STYLE="Space Yellow"}
+: ${TLDR_EXAMPLE_STYLE="Newline Space Bold Green"}
+: ${TLDR_CODE_STYLE="Space Bold Blue"}
+: ${TLDR_VALUE_ISTYLE="Space Bold Cyan"}
 # The Value style (above) is an Inline style: doesn't take Newline or Space
 # Inline styles for help text: default, URL, option, platform, command, header
-: ${TLDR_DEFAULT_ISTYLE:="White"}
-: ${TLDR_URL_ISTYLE:="Yellow"}
-: ${TLDR_HEADER_ISTYLE:="Bold"}
-: ${TLDR_OPTION_ISTYLE:="Bold Yellow"}
-: ${TLDR_PLATFORM_ISTYLE:="Bold Blue"}
-: ${TLDR_COMMAND_ISTYLE:="Bold Cyan"}
-: ${TLDR_FILE_ISTYLE:="Bold Magenta"}
+: ${TLDR_DEFAULT_ISTYLE="White"}
+: ${TLDR_URL_ISTYLE="Yellow"}
+: ${TLDR_HEADER_ISTYLE="Bold"}
+: ${TLDR_OPTION_ISTYLE="Bold Yellow"}
+: ${TLDR_PLATFORM_ISTYLE="Bold Blue"}
+: ${TLDR_COMMAND_ISTYLE="Bold Cyan"}
+: ${TLDR_FILE_ISTYLE="Bold Magenta"}
 # Color/BG (Newline and Space also allowed) for error and info messages
-: ${TLDR_ERROR_COLOR:="Newline Space Red"}
-: ${TLDR_INFO_COLOR:="Newline Space Green"}
+: ${TLDR_ERROR_COLOR="Newline Space Red"}
+: ${TLDR_INFO_COLOR="Newline Space Green"}
 
 # How many days before freshly downloading a potentially stale page
 : ${TLDR_EXPIRY:=7}
 # Alternative location of pages cache
-: ${TLDR_CACHE_LOCATION:=""}
+: ${TLDR_CACHE_LOCATION=""}
 # Usage of 'less' or 'cat' for output (set to '0' for cat)
 : ${TLDR_LESS:=1}
 # Force current OS
-: ${TLDR_OS:=""}
+: ${TLDR_OS=""}
 # Force preferred language: ISO639 format (2 lowercase letters)
-: ${TLDR_LANG:=""}
+: ${TLDR_LANG=""}
 
 ## Function definitions
 
