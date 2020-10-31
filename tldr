@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set +vx -o pipefail
 [[ $- = *i* ]] && echo "Don't source this script!" && return 1
-version='0.45'
+version='0.46'
 # tldr-bash-client version 0.44
 # Bash client for tldr: community driven man-by-example
 # - forked from Ray Lee, https://github.com/raylee/tldr
@@ -371,7 +371,8 @@ List_pages(){
 			pregex=common ptext="platform not detected, ${I}common$XI"
 	fi
 	Inf "Known tldr pages from $ptext:"
-	Out "$(tr '{' '\n' <"$index" |grep $pregex |cut -d "$Q" -f4 |column)"
+	Out "$(tr '{' '\n' <"$index" |grep '^"name"' |grep $pregex |
+			cut -d "$Q" -f4 |column)"
 	exit "$1"
 }
 
