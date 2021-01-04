@@ -1,6 +1,6 @@
 # tldr-bash-client
 
-* version 0.46
+* version 0.47
 
 ### Bash client for tldr: community driven man-by-example
 **A fully-functional [bash](https://tiswww.case.edu/php/chet/bash/bashtop.html)
@@ -110,10 +110,10 @@ coreutils, sed, grep, find
 Please file an issue for a question, a bug or a feature request.
 Or even better, send a pull request!
 
-[tldr-bash-client gitlab page](http://gitlab.com/pepa65/tldr-bash-client "gitlab.com/pepa65/tldr-bash-client")
+[tldr-bash-client gitlab page](https://gitlab.com/pepa65/tldr-bash-client "gitlab.com/pepa65/tldr-bash-client")
 
 ### License
 
-Original tldr client in bash by Ray Lee http://github.com/raylee/tldr (MIT license)
+Original tldr client in bash by Ray Lee https://github.com/raylee/tldr (MIT license)
 
 The **tldr-bash-client** is relicensed under GPLv3+ and **tldr-lint** is GPLv3+ as well.
